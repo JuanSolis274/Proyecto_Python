@@ -21,6 +21,7 @@ def leer_datos_desde_arduino():
     """
     try:
         puerto = serial.Serial("COM3", baudrate=9600, timeout=1)
+        puerto = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=1)
         print("Conexión establecida con Arduino en COM3.")
 
         while True:
