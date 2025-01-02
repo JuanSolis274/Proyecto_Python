@@ -14,7 +14,7 @@ class ConexionDB:
     def conectar(self):
         try:
             self.client = MongoClient(self.uri, serverSelectionTimeoutMS=5000)
-            self.client.server_info()  # Verificar conexión
+            self.client.server_info()
             self.db = self.client[self.db_name]
             return True
         except errors.ServerSelectionTimeoutError:
@@ -30,7 +30,6 @@ class ConexionDB:
             lectura = {"tipo_sensor": tipo_sensor, "valor": valor, "fecha": fecha}
 
             try:
-                # Intentar insertar la lectura en MongoDB
                 resultado = coleccion.update_one(
                     {"_id": pecera_id}, {"$push": {"sensores": lectura}}
                 )
@@ -57,7 +56,7 @@ class ConexionDB:
             pecera_id = ObjectId("67467ff900c28fd4180ac074")
             coleccion = self.db[self.collection_name]
 
-            sincronizadas = True  # Bandera para limpiar JSON solo si todo se sincroniza
+            sincronizadas = True
             for lectura in lecturas_pendientes:
                 try:
                     resultado = coleccion.update_one(
