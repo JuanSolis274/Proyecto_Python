@@ -15,14 +15,13 @@ def procesar_datos(datos):
         print(f"Error al procesar datos: {e}")
 
 
-def leer_datos_desde_arduino():
+def leer_datos_desde_arduino(puerto_serie):
     """
     Lee datos enviados por el Arduino a través del puerto serie.
     """
     try:
-        puerto = serial.Serial("COM3", baudrate=9600, timeout=1)
-        puerto = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=1)
-        print("Conexión establecida con Arduino en COM3.")
+        puerto = serial.Serial(puerto_serie, baudrate=9600, timeout=1)
+        print(f"Conexión establecida con Arduino en {puerto_serie}.")
 
         while True:
             linea = puerto.readline().decode("utf-8").strip()
@@ -38,7 +37,10 @@ def leer_datos_desde_arduino():
 
 
 if __name__ == "__main__":
-    datos_arduino = leer_datos_desde_arduino()
+    # Cambia el puerto según el dispositivo conectado
+    puerto_serie = "/dev/ttyUSB0"  # Verifica si es el puerto correcto
+
+    datos_arduino = leer_datos_desde_arduino(puerto_serie)
 
     for datos in datos_arduino:
         print(f"Datos recibidos: {datos}")
