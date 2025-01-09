@@ -2,6 +2,7 @@ import datetime
 from pymongo import MongoClient, errors
 from bson import ObjectId
 from archivo_json import guardar_lectura_json, leer_lecturas_json, limpiar_json
+import socket
 
 class ConexionDB:
     def __init__(self):
@@ -24,26 +25,39 @@ class ConexionDB:
     def insertar_lectura(self, tipo_sensor, valor):
         fecha = datetime.datetime.now()
 
-        if self.conectar():
-            pecera_id = ObjectId("67467ff900c28fd4180ac074")
-            coleccion = self.db[self.collection_name]
-            lectura = {"tipo_sensor": tipo_sensor, "valor": valor, "fecha": fecha}
+        if hay_conexion():
+            if self.conectar():
+                pecera_id = ObjectId("67467ff900c28fd4180ac074")
+                coleccion = self.db[self.collection_name]
+                lectura = {"tipo_sensor": tipo_sensor, "valor": valor, "fecha": fecha}
 
-            try:
-                resultado = coleccion.update_one(
-                    {"_id": pecera_id}, {"$push": {"sensores": lectura}}
-                )
-                if resultado.modified_count > 0:
-                    print(f"Lectura guardada en MongoDB: {lectura}")
-                else:
-                    print("No se pudo guardar la lectura en MongoDB.")
+                try:
+                    resultado = coleccion.update_one(
+                        {"_id": pecera_id}, {"$push": {"sensores": lectura}}
+                    )
+                    if resultado.modified_count > 0:
+                        print(f"Lectura guardada en MongoDB: {lectura}")
+                    else:
+                        print("No se pudo guardar la lectura en MongoDB.")
+                        guardar_lectura_json(tipo_sensor, valor)
+                except Exception as e:
+                    print(f"Error al guardar en MongoDB: {e}. Guardando en JSON.")
                     guardar_lectura_json(tipo_sensor, valor)
-            except Exception as e:
-                print(f"Error al guardar en MongoDB: {e}. Guardando en JSON.")
+            else:
+                print("Sin conexión a MongoDB. Guardando lectura en JSON.")
                 guardar_lectura_json(tipo_sensor, valor)
         else:
-            print("Sin conexión a MongoDB. Guardando lectura en JSON.")
+            print("Sin conexión a la red. Guardando lectura en JSON.")
             guardar_lectura_json(tipo_sensor, valor)
+
+    def hay_conexion():
+            try:
+                # Intenta conectarte a un servidor conocido (Google DNS)
+                socket.create_connection(("8.8.8.8", 53), timeout=3)
+                return True
+            except OSError:
+                return False
+
 
     def sincronizar_json(self):
         lecturas_pendientes = leer_lecturas_json()
@@ -52,7 +66,7 @@ class ConexionDB:
             print("No hay lecturas pendientes para sincronizar.")
             return
 
-        if self.conectar():
+        if hay_conexion() and self.conectar():
             pecera_id = ObjectId("67467ff900c28fd4180ac074")
             coleccion = self.db[self.collection_name]
 
@@ -76,4 +90,5 @@ class ConexionDB:
             else:
                 print("Algunas lecturas no pudieron sincronizarse. Archivo JSON no limpiado.")
         else:
-            print("No se pudo conectar a MongoDB para sincronizar lecturas.")
+            print("No hay conexión para sincronizar lecturas.")
+
